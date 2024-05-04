@@ -19,7 +19,7 @@ Simple as that we just access the project methods object and call create with na
 ```js
 import LumxApi from "lumx-node";
 
-const lumx = LumxApi.config({ bearer });
+const lumx = LumxApi.config({}); //leave it empty since you're doing your first interaction
 
 const { apiKey } = await lumx.project.create({
   name: "My Project", //Your project's name
@@ -65,38 +65,39 @@ const wallet = await lumx.wallets.create();
 > Will focus on the custom one for focus
 
 ```mjs
-import LumxApi from 'lumx-node'
+import LumxApi from "lumx-node";
 
-import dotenv from 'dotenv'
-dotenv.config()
+import dotenv from "dotenv";
+dotenv.config();
 
-const { bearer } = process.env
+const { bearer } = process.env;
 
-const lumx = LumxApi.config({ bearer })
+const lumx = LumxApi.config({ bearer });
 
 //first make the operations you want when accessing contracts
 
 lumx.transactions.addOperationToCustomQueue({
-    function: "teste(uint16 _a)",
-    parameters: [1]
-})
+  function: "teste(uint16 _a)",
+  parameters: [1],
+});
 
 //our custom module will create the tx and wait for the confirmation
-lumx.transactions.executeCustomTransactionAndWait({ 
+lumx.transactions
+  .executeCustomTransactionAndWait({
     contractAddress: "0x9Baf02772de058aFAe32c7607288af7ed45B8224",
     walletId: (await lumx.wallets.create()).id, //we create the wallet inside here
     timeout: 30000, //optional default is 20000
-    log: true //optional to see the progress of the txn
-})
-    .then(result => {
-        if (result.status == "success") {
-            console.log("Transaction mined")
-        } else {
-            console.log("Transaction failed")
-        }
-    })
-    .catch(error => {
-        //will fail if the transaction is not mined in 30 seconds or any other expection occurs
-        console.error(error)
-    })
+    log: true, //optional to see the progress of the txn
+  })
+  .then((result) => {
+    if (result.status == "success") {
+      console.log("Transaction mined");
+    } else {
+      console.log("Transaction failed");
+    }
+  })
+  .catch((error) => {
+    //will fail if the transaction is not mined in 30 seconds or any other expection occurs
+    console.error(error);
+  });
 ```
