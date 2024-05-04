@@ -1,3 +1,5 @@
-import LumxApi from './class/LumxApi.js'
+import LumxApi from './class/api.js'
 
-export default LumxApi
+export {
+    LumxApi
+}
