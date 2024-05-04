@@ -238,9 +238,10 @@ export default class LumxAPI {
         * @param {Object} waitTransactionParameters
         * @param {string} waitTransactionParameters.transactionId - The transaction's unique identifier
         * @param {number | 20000} waitTransactionParameters.timeout - Timeout in milisseconds
+        * @param {boolean} waitTransactionParameters.log - Log the transaction status
         * @returns {Promise<TransactionReadReturnData>} The transaction object
         */
-        readAndWaitTransaction: async ({ transactionId, timeout = 20000 }) => {
+        readAndWaitTransaction: async ({ transactionId, timeout = 20000, log }) => {
             return new Promise(async (resolve, reject) => {
                 const _timeout = setTimeout(() => {
                     clearInterval(interval);
@@ -257,6 +258,10 @@ export default class LumxAPI {
                         clearInterval(interval);
                         clearTimeout(_timeout);
                         resolve(transaction);
+                    } else {
+                        if (log) {
+                            console.log(`Transaction ${transactionId} is still pending retrying in ${timeout / 1000} seconds.`)
+                        }
                     }
                 }, 1000)
 
@@ -312,19 +317,29 @@ export default class LumxAPI {
         * @param {string} TransactionData.walletId - The wallet id
         * @param {string} TransactionData.contractAddress - The contract address
         * @param {Number} TransactionData.timeout - Timeout in milisseconds of waiting
+        * @param {boolean} waitTransactionParameters.log - Log the transaction status
         * @returns {Promise<TransactionReadReturnData>} 
         */
-        executeCustomTransactionAndWait: async ({ walletId, contractAddress, timeout }) => {
+        executeCustomTransactionAndWait: async ({ walletId, contractAddress, timeout, log = false }) => {
+            if (log) {
+                console.log(`Executing custom transaction with ${this.operationsQueue.length} operations`)
+            }
+
             const requestResult = await this.#makeRequest({
                 method: 'POST',
                 path: `transactions/custom`,
                 data: { walletId, contractAddress, operations: this.operationsQueue }
             });
 
+            if (log) {
+                console.log(`Transaction created with id ${requestResult.id} output: `)
+                console.log(requestResult)
+            }
+
             this.operationsQueue = []
             this.customContract = ''
 
-            return await this.transactions.readAndWaitTransaction({ transactionId: requestResult.id })
+            return await this.transactions.readAndWaitTransaction({ transactionId: requestResult.id, log })
         },
 
         /**
