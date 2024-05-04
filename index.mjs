@@ -335,8 +335,11 @@ export default class LumxAPI {
          * @param {number} OperationParameters.value - Value of chain native tokens to be sent along with the transaction. 
          */
         addOperationToCustomQueue: async (OperationParameters) => {
-            this.operationsQueue.push(OperationParameters)
+            this.operationsQueue.push({
+                functionSignature: OperationParameters.function,
+                argumentsValues: OperationParameters.parameters,
+                messageValue: OperationParameters.value || 0
+            })
         }
     };
 }
-
