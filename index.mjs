@@ -386,7 +386,7 @@ export default class LumxAPI extends Web3 {
                 this.operationsQueue = []
                 this.customContract = ''
 
-                return await this.lumx.transactions.readAndWaitTransaction({ transactionId: requestResult.id, log })
+                return await this.lumx.transactions.readAndWaitTransaction({ transactionId: requestResult.id, log, timeout })
             },
 
             /**
