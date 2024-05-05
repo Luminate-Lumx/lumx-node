@@ -301,7 +301,7 @@ export default class LumxAPI extends Web3 {
                             path: `transactions/${transactionId}`
                         });
 
-                        if (transaction.status == 'success' || transaction.status == 'failed') {
+                        if (transaction.status !== 'created') {
                             clearInterval(interval);
                             clearTimeout(_timeout);
                             resolve(transaction);
