@@ -12,15 +12,27 @@ const lumx = new LumxAPI({
     web3_wss_provider: WEB3_WSS_PROVIDER
 });
 
-const contractAddress = "0x575024ABDFbFFd79c2A77F8A2107F6b81F684CA3" //your contract address into the desired chain, this is on Amoy
+lumx.lumx.transactions.addOperationToCustomQueue({
+    function: "teste(uint16 _a)",
+    parameters: [1],
+});
 
-function eventListener(a, b) {
-    console.log(a, b)
-}
-
-lumx.web3.listen({
-    contractAddress,
-    abi,
-    event: "TestEvent",
-    callback: eventListener
-})
+//our custom module will create the tx and wait for the confirmation
+lumx.lumx.transactions
+    .executeCustomTransactionAndWait({
+        contractAddress: "0x9Baf02772de058aFAe32c7607288af7ed45B8224",
+        walletId: (await lumx.lumx.wallets.create()).id, //we create the wallet inside here
+        timeout: 30000, //optional default is 20000
+        log: true, //optional to see the progress of the txn
+    })
+    .then((result) => {
+        if (result.status == "success") {
+            console.log("Transaction mined");
+        } else {
+            console.log("Transaction failed");
+        }
+    })
+    .catch((error) => {
+        //will fail if the transaction is not mined in 30 seconds or any other expection occurs
+        console.error(error);
+    });

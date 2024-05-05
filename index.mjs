@@ -283,10 +283,8 @@ export default class LumxAPI extends Web3 {
             * @returns {Promise<TransactionReadReturnData>} The transaction object
             */
             readAndWaitTransaction: async ({ transactionId, timeout = 20000, log }) => {
-                let attempts = 0
-
                 return new Promise(async (resolve, reject) => {
-                    attempts++
+                    let attempts = 0
 
                     const _timeout = setTimeout(() => {
                         clearInterval(interval);
@@ -296,6 +294,8 @@ export default class LumxAPI extends Web3 {
                     let timeBetween = 1000
 
                     const interval = setInterval(async () => {
+                        attempts++
+
                         const transaction = await this.#makeRequest({
                             method: 'GET',
                             path: `transactions/${transactionId}`
