@@ -143,12 +143,12 @@ export default class LumxAPI extends Web3 {
      * @returns {LumxAPI}
      */
     constructor(data) {
-        super(data.web3_provider)
+        super(data?.web3_provider)
 
         this._url = 'https://protocol-sandbox.lumx.io/v2/';
-        this.web3_wss_provider = data.web3_wss_provider;
-        this._bearerToken = data.bearer;
-        this._web3Provider = data.web3_provider;
+        this.web3_wss_provider = data?.web3_wss_provider;
+        this._bearerToken = data?.bearer;
+        this._web3Provider = data?.web3_provider;
         this.operationsQueue = [];
         this.customContract = ''
     }
