@@ -134,7 +134,9 @@ import { WebSocketProvider, Contract } from "ethers";
  */
 
 export default class LumxAPI extends Web3 {
-    constructor({ bearer, web3_provider, web3_wss_provider }) {
+    constructor(data) {
+        const { bearer, web3_provider, web3_wss_provider } = data;
+
         super(web3_provider)
 
         this._url = 'https://protocol-sandbox.lumx.io/v2/';

@@ -27,7 +27,7 @@ Simple as that we just access the project methods object and call create with na
 ```js
 import LumxApi from "lumx-node";
 
-const lumx = LumxApi.config({}); //leave it empty since you're doing your first interaction   
+const lumx = new LumxApi(); //leave it empty since you're doing your first interaction   
 
 const { apiKey } = await lumx.project.create({
   name: "My Project", //Your project's name
@@ -65,7 +65,7 @@ dotenv.config();
 
 const { BEARER: bearer } = process.env;
 
-const lumx = LumxApi.config({ bearer });
+const lumx = new LumxApi({ bearer });
 
 const wallet = await lumx.wallets.create();
 ```
@@ -82,7 +82,7 @@ dotenv.config();
 
 const { BEARER: bearer } = process.env;
 
-const lumx = LumxApi.config({ bearer });
+const lumx = new LumxApi({ bearer });
 
 //first make the operations you want when accessing contracts
 
