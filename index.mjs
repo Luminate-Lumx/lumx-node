@@ -198,203 +198,205 @@ export default class LumxAPI extends Web3 {
         }
     }
 
-    project = {
-        /**
-        * Creates a new project on Lumx.
-        * @param {CreateProjectParams} params - The parameters to create a project.
-        * @returns {Promise<CreatedProject>} Project object.
-        */
-        create: async ({ name, chain = 'Ethereum' || 'Chiliz' || 'Polygon' }) => {
-            return await this.#makeRequest({
-                method: 'POST',
-                path: 'projects/auth',
-                data: { name, blockchainName: chain }
-            });;
+    lumx = {
+        project: {
+            /**
+            * Creates a new project on Lumx.
+            * @param {CreateProjectParams} params - The parameters to create a project.
+            * @returns {Promise<CreatedProject>} Project object.
+            */
+            create: async ({ name, chain = 'Ethereum' || 'Chiliz' || 'Polygon' }) => {
+                return await this.#makeRequest({
+                    method: 'POST',
+                    path: 'projects/auth',
+                    data: { name, blockchainName: chain }
+                });;
+            },
+        },
+
+        wallets: {
+            /**Create a new wallet on Lumx but only retrieves the id and references to it!
+             * 
+             * @returns {Promise<WalletBase>}
+             */
+            create: async () => {
+                return await this.#makeRequest({
+                    method: 'POST',
+                    path: 'wallets'
+                });
+            },
+            /**Gets information about an wallet on Lumx with it's tokens information too!
+            * 
+            * @returns {Promise<WalletTokens>}
+            */
+            read: async ({ walletId }) => {
+                return await this.#makeRequest({
+                    method: 'GET',
+                    path: `wallets/${walletId}`
+                });
+            },
+            /**Gets information about an wallet on Lumx with it's tokens information too!
+            * 
+            * @returns {Promise<[WalletBase]>}
+            */
+            readAllWallets: async () => {
+                return await this.#makeRequest({
+                    method: 'GET',
+                    path: `wallets`
+                });
+            },
+        },
+
+        transactions: {
+            /**
+            * Transfers a non-fungible token from one wallet to another.
+            * @param {TransferNftData} - The data for the transfer.
+            * @returns {Promise<TransferObject>} The transfer object.
+            */
+            transferNft: async ({ contractId, from, to, tokenId }) => {
+                return await this.#makeRequest({
+                    method: 'POST',
+                    path: `transactions/transfers`,
+                    data: { from, to, tokenId, contractId }
+                });
+            },
+
+            /**
+            * Transfers a non-fungible token from one wallet to another.
+            * @param {TransferTokensData} - The data for the transfer.
+            * @returns {Promise<TransferObject>} The transfer object.
+            */
+            transferTokens: async ({ contractId, from, to, quantity }) => {
+                return await this.#makeRequest({
+                    method: 'POST',
+                    path: `transactions/transfers`,
+                    data: { from, to, quantity, contractId }
+                });
+            },
+
+            /**
+            * Waits a transaction to be completed or failed
+            * @param {Object} waitTransactionParameters
+            * @param {string} waitTransactionParameters.transactionId - The transaction's unique identifier
+            * @param {number | 20000} waitTransactionParameters.timeout - Timeout in milisseconds
+            * @param {boolean} waitTransactionParameters.log - Log the transaction status
+            * @returns {Promise<TransactionReadReturnData>} The transaction object
+            */
+            readAndWaitTransaction: async ({ transactionId, timeout = 20000, log }) => {
+                return new Promise(async (resolve, reject) => {
+                    const _timeout = setTimeout(() => {
+                        clearInterval(interval);
+                        reject(`Waited for ${timeout / 1000} seconds and the transaction is still pending.`)
+                    }, timeout)
+
+                    const interval = setInterval(async () => {
+                        const transaction = await this.#makeRequest({
+                            method: 'GET',
+                            path: `transactions/${transactionId}`
+                        });
+
+                        if (transaction.status == 'completed' || transaction.status == 'failed') {
+                            clearInterval(interval);
+                            clearTimeout(_timeout);
+                            resolve(transaction);
+                        } else {
+                            if (log) {
+                                console.log(`Transaction ${transactionId} is still pending retrying in ${timeout / 1000} seconds.`)
+                            }
+                        }
+                    }, 1000)
+
+                });
+            },
+
+            /**
+             * Reads a single transaction from Lumx.
+             * @param {string} transactionId - The transaction's unique identifier
+             * @returns {Promise<TransactionReadReturnData>}
+             */
+            readTransaction: async (transactionId) => {
+                return await this.#makeRequest({
+                    method: 'GET',
+                    path: `transactions/${transactionId}`
+                });
+            },
+
+            /**
+             * Gets information about all transactions made in your project.
+             * @returns {Promise<[TransactionReadReturnData]>} The transactions made in your project.
+             */
+            readAllTransactions: async () => {
+                return await this.#makeRequest({
+                    method: 'GET',
+                    path: `transactions`
+                });
+            },
+
+            /**
+            * Execute all the custom operations in the queue and then clear it.
+            * @param {Object} TransactionData
+            * @param {string} TransactionData.walletId
+            * @param {string} TransactionData.contractAddress
+            * @returns {Promise<CustomTransactionReturnData>} 
+            */
+            executeCustomTransaction: async ({ walletId, contractAddress }) => {
+                const requestResult = await this.#makeRequest({
+                    method: 'POST',
+                    path: `transactions/custom`,
+                    data: { walletId, contractAddress, operations: this.operationsQueue }
+                });
+
+                this.operationsQueue = []
+                this.customContract = ''
+
+                return requestResult
+            },
+
+            /**
+            * Execute all the custom operations in the queue, clear it and then wait for confirmation.
+            * @param {Object} TransactionData
+            * @param {string} TransactionData.walletId - The wallet id
+            * @param {string} TransactionData.contractAddress - The contract address
+            * @param {Number} TransactionData.timeout - Timeout in milisseconds of waiting
+            * @param {boolean} waitTransactionParameters.log - Log the transaction status
+            * @returns {Promise<TransactionReadReturnData>} 
+            */
+            executeCustomTransactionAndWait: async ({ walletId, contractAddress, timeout, log = false }) => {
+                if (log) {
+                    console.log(`Executing custom transaction with ${this.operationsQueue.length} operations`)
+                }
+
+                const requestResult = await this.#makeRequest({
+                    method: 'POST',
+                    path: `transactions/custom`,
+                    data: { walletId, contractAddress, operations: this.operationsQueue }
+                });
+
+                if (log) {
+                    console.log(`Transaction created with id ${requestResult.id} output: `)
+                    console.log(requestResult)
+                }
+
+                this.operationsQueue = []
+                this.customContract = ''
+
+                return await this.transactions.readAndWaitTransaction({ transactionId: requestResult.id, log })
+            },
+
+            /**
+             * Custom operation values to be executed
+             * @param {Object} OperationParameters
+             * @param {string} OperationParameters.function - Function name and parameter with types eg: "mint(uint256)"
+             * @param {string[]} OperationParameters.parameters - Argumentes and values for the parameters on the functions eg: ["100"]
+             * @param {number} OperationParameters.value - Value of chain native tokens to be sent along with the transaction. 
+             */
+            addOperationToCustomQueue: async (OperationParameters) => {
+                this.operationsQueue.push({
+                    functionSignature: OperationParameters.function,
+                    argumentsValues: OperationParameters.parameters,
+                    messageValue: OperationParameters.value || 0
+                })
+            }
         },
     }
-
-    wallets = {
-        /**Create a new wallet on Lumx but only retrieves the id and references to it!
-         * 
-         * @returns {Promise<WalletBase>}
-         */
-        create: async () => {
-            return await this.#makeRequest({
-                method: 'POST',
-                path: 'wallets'
-            });
-        },
-        /**Gets information about an wallet on Lumx with it's tokens information too!
-        * 
-        * @returns {Promise<WalletTokens>}
-        */
-        read: async ({ walletId }) => {
-            return await this.#makeRequest({
-                method: 'GET',
-                path: `wallets/${walletId}`
-            });
-        },
-        /**Gets information about an wallet on Lumx with it's tokens information too!
-        * 
-        * @returns {Promise<[WalletBase]>}
-        */
-        readAllWallets: async () => {
-            return await this.#makeRequest({
-                method: 'GET',
-                path: `wallets`
-            });
-        },
-    };
-
-    transactions = {
-        /**
-        * Transfers a non-fungible token from one wallet to another.
-        * @param {TransferNftData} - The data for the transfer.
-        * @returns {Promise<TransferObject>} The transfer object.
-        */
-        transferNft: async ({ contractId, from, to, tokenId }) => {
-            return await this.#makeRequest({
-                method: 'POST',
-                path: `transactions/transfers`,
-                data: { from, to, tokenId, contractId }
-            });
-        },
-
-        /**
-        * Transfers a non-fungible token from one wallet to another.
-        * @param {TransferTokensData} - The data for the transfer.
-        * @returns {Promise<TransferObject>} The transfer object.
-        */
-        transferTokens: async ({ contractId, from, to, quantity }) => {
-            return await this.#makeRequest({
-                method: 'POST',
-                path: `transactions/transfers`,
-                data: { from, to, quantity, contractId }
-            });
-        },
-
-        /**
-        * Waits a transaction to be completed or failed
-        * @param {Object} waitTransactionParameters
-        * @param {string} waitTransactionParameters.transactionId - The transaction's unique identifier
-        * @param {number | 20000} waitTransactionParameters.timeout - Timeout in milisseconds
-        * @param {boolean} waitTransactionParameters.log - Log the transaction status
-        * @returns {Promise<TransactionReadReturnData>} The transaction object
-        */
-        readAndWaitTransaction: async ({ transactionId, timeout = 20000, log }) => {
-            return new Promise(async (resolve, reject) => {
-                const _timeout = setTimeout(() => {
-                    clearInterval(interval);
-                    reject(`Waited for ${timeout / 1000} seconds and the transaction is still pending.`)
-                }, timeout)
-
-                const interval = setInterval(async () => {
-                    const transaction = await this.#makeRequest({
-                        method: 'GET',
-                        path: `transactions/${transactionId}`
-                    });
-
-                    if (transaction.status == 'completed' || transaction.status == 'failed') {
-                        clearInterval(interval);
-                        clearTimeout(_timeout);
-                        resolve(transaction);
-                    } else {
-                        if (log) {
-                            console.log(`Transaction ${transactionId} is still pending retrying in ${timeout / 1000} seconds.`)
-                        }
-                    }
-                }, 1000)
-
-            });
-        },
-
-        /**
-         * Reads a single transaction from Lumx.
-         * @param {string} transactionId - The transaction's unique identifier
-         * @returns {Promise<TransactionReadReturnData>}
-         */
-        readTransaction: async (transactionId) => {
-            return await this.#makeRequest({
-                method: 'GET',
-                path: `transactions/${transactionId}`
-            });
-        },
-
-        /**
-         * Gets information about all transactions made in your project.
-         * @returns {Promise<[TransactionReadReturnData]>} The transactions made in your project.
-         */
-        readAllTransactions: async () => {
-            return await this.#makeRequest({
-                method: 'GET',
-                path: `transactions`
-            });
-        },
-
-        /**
-        * Execute all the custom operations in the queue and then clear it.
-        * @param {Object} TransactionData
-        * @param {string} TransactionData.walletId
-        * @param {string} TransactionData.contractAddress
-        * @returns {Promise<CustomTransactionReturnData>} 
-        */
-        executeCustomTransaction: async ({ walletId, contractAddress }) => {
-            const requestResult = await this.#makeRequest({
-                method: 'POST',
-                path: `transactions/custom`,
-                data: { walletId, contractAddress, operations: this.operationsQueue }
-            });
-
-            this.operationsQueue = []
-            this.customContract = ''
-
-            return requestResult
-        },
-
-        /**
-        * Execute all the custom operations in the queue, clear it and then wait for confirmation.
-        * @param {Object} TransactionData
-        * @param {string} TransactionData.walletId - The wallet id
-        * @param {string} TransactionData.contractAddress - The contract address
-        * @param {Number} TransactionData.timeout - Timeout in milisseconds of waiting
-        * @param {boolean} waitTransactionParameters.log - Log the transaction status
-        * @returns {Promise<TransactionReadReturnData>} 
-        */
-        executeCustomTransactionAndWait: async ({ walletId, contractAddress, timeout, log = false }) => {
-            if (log) {
-                console.log(`Executing custom transaction with ${this.operationsQueue.length} operations`)
-            }
-
-            const requestResult = await this.#makeRequest({
-                method: 'POST',
-                path: `transactions/custom`,
-                data: { walletId, contractAddress, operations: this.operationsQueue }
-            });
-
-            if (log) {
-                console.log(`Transaction created with id ${requestResult.id} output: `)
-                console.log(requestResult)
-            }
-
-            this.operationsQueue = []
-            this.customContract = ''
-
-            return await this.transactions.readAndWaitTransaction({ transactionId: requestResult.id, log })
-        },
-
-        /**
-         * Custom operation values to be executed
-         * @param {Object} OperationParameters
-         * @param {string} OperationParameters.function - Function name and parameter with types eg: "mint(uint256)"
-         * @param {string[]} OperationParameters.parameters - Argumentes and values for the parameters on the functions eg: ["100"]
-         * @param {number} OperationParameters.value - Value of chain native tokens to be sent along with the transaction. 
-         */
-        addOperationToCustomQueue: async (OperationParameters) => {
-            this.operationsQueue.push({
-                functionSignature: OperationParameters.function,
-                argumentsValues: OperationParameters.parameters,
-                messageValue: OperationParameters.value || 0
-            })
-        }
-    };
 }

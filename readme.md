@@ -29,7 +29,7 @@ import LumxApi from "lumx-node";
 
 const lumx = new LumxApi(); //leave it empty since you're doing your first interaction   
 
-const { apiKey } = await lumx.project.create({
+const { apiKey } = await lumx.lumx.project.create({
   name: "My Project", //Your project's name
   chain: "Ethereum", //Select one chain from the chain list ctrl + space
 });
@@ -67,7 +67,8 @@ const { BEARER: bearer } = process.env;
 
 const lumx = new LumxApi({ bearer });
 
-const wallet = await lumx.wallets.create();
+const wallet = await lumx.lumx.wallets.create();
+//note that lumx is accessed under the variable since lumx class extends web3 so we have it for convention for easily seeing what is covered up
 ```
 
 ## ✍️ Writing Transactions
@@ -86,16 +87,16 @@ const lumx = new LumxApi({ bearer });
 
 //first make the operations you want when accessing contracts
 
-lumx.transactions.addOperationToCustomQueue({
+lumx.lumx.transactions.addOperationToCustomQueue({
   function: "teste(uint16 _a)",
   parameters: [1],
 });
 
 //our custom module will create the tx and wait for the confirmation
-lumx.transactions
+lumx.lumx.transactions
   .executeCustomTransactionAndWait({
     contractAddress: "0x9Baf02772de058aFAe32c7607288af7ed45B8224",
-    walletId: (await lumx.wallets.create()).id, //we create the wallet inside here
+    walletId: (await lumx.lumx.wallets.create()).id, //we create the wallet inside here
     timeout: 30000, //optional default is 20000
     log: true, //optional to see the progress of the txn
   })
