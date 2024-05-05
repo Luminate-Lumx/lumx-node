@@ -137,12 +137,12 @@ export default class LumxAPI extends Web3 {
     /**
      * Lumx instanciate class
      * @param {Object} variablesData
-     * @param {string} variablesData.bearer - The bearer token to authenticate with Lumx.
-     * @param {string} variablesData.web3_provider - The web3 provider to interact with the blockchain.
-     * @param {string} variablesData.web3_wss_provider - The web3 provider to listen to events. 
+     * @param {string | null} variablesData.bearer - The bearer token to authenticate with Lumx.
+     * @param {string | null} variablesData.web3_provider - The web3 provider to interact with the blockchain.
+     * @param {string | null} variablesData.web3_wss_provider - The web3 provider to listen to events. 
      * @returns {LumxAPI}
      */
-    constructor(data) {
+    constructor(data = { bearer: null, web3_provider: null, web3_wss_provider: null }) {
         super(data?.web3_provider)
 
         this._url = 'https://protocol-sandbox.lumx.io/v2/';
