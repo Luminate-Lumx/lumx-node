@@ -1,4 +1,6 @@
 import axios from "axios";
+import Web3 from "web3";
+import { WebSocketProvider, Contract } from "ethers";
 
 /**
  * @typedef {Object} Token
@@ -131,14 +133,14 @@ import axios from "axios";
  * @property {Token[]} tokens - An array of tokens associated with the project
  */
 
-export default class LumxAPI {
-    static config({ bearer }) {
-        return new LumxAPI({ bearer });
-    }
+export default class LumxAPI extends Web3 {
+    constructor({ bearer, web3_provider, web3_wss_provider }) {
+        super(web3_provider)
 
-    constructor({ bearer }) {
         this._url = 'https://protocol-sandbox.lumx.io/v2/';
+        this.web3_wss_provider = web3_wss_provider;
         this._bearerToken = bearer;
+        this._web3Provider = web3_provider;
         this.operationsQueue = [];
         this.customContract = ''
     }
@@ -155,6 +157,36 @@ export default class LumxAPI {
 
         if (method == 'POST') {
             return (await axios.post(this._url + path, data, { headers })).data
+        }
+    }
+
+    web3 = {
+        /**
+         * 
+         * @param {Object} readDataOptions
+         * @param {string} readDataOptions.contractAddress
+         * @param {string} readDataOptions.abi
+         * @param {string} readDataOptions.method
+         * @param {string[]} readDataOptions.args 
+         * @returns {Promise<any>}
+         */
+        read: async ({ contractAddress, abi, method, args = [] }) => {
+            const contract = new this.eth.Contract(abi, contractAddress)
+
+            return await contract.methods[method](...args).call()
+        },
+        /**
+         * 
+         * @param {Object} listenToEventOptions - Options to listen to an event
+         * @param {string} listenToEventOptions.contractAddress - Contract address
+         * @param {string} listenToEventOptions.abi - Contract abi
+         * @param {string} listenToEventOptions.event - Event name
+         * @param {Function} listenToEventOptions.callback - your function to recive the callbacks, pay atention to the parameters.
+         */
+        listen: async ({ contractAddress, abi, event, callback }) => {
+            const contract = new Contract(contractAddress, abi, new WebSocketProvider(this.web3_wss_provider))
+
+            contract.on(event, callback)
         }
     }
 
