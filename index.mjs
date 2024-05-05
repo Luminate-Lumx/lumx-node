@@ -283,11 +283,17 @@ export default class LumxAPI extends Web3 {
             * @returns {Promise<TransactionReadReturnData>} The transaction object
             */
             readAndWaitTransaction: async ({ transactionId, timeout = 20000, log }) => {
+                let attempts = 0
+
                 return new Promise(async (resolve, reject) => {
+                    attempts++
+
                     const _timeout = setTimeout(() => {
                         clearInterval(interval);
                         reject(`Waited for ${timeout / 1000} seconds and the transaction is still pending.`)
                     }, timeout)
+
+                    let timeBetween = 1000
 
                     const interval = setInterval(async () => {
                         const transaction = await this.#makeRequest({
@@ -301,10 +307,10 @@ export default class LumxAPI extends Web3 {
                             resolve(transaction);
                         } else {
                             if (log) {
-                                console.log(`Transaction ${transactionId} is still pending retrying in ${timeout / 1000} seconds.`)
+                                console.log(`Transaction ${transactionId} is still pending retrying in ${timeBetween / 1000} seconds, status: ${transaction.status}, attempts: ${attempts}`)
                             }
                         }
-                    }, 1000)
+                    }, timeBetween)
 
                 });
             },
