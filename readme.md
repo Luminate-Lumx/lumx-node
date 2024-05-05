@@ -19,7 +19,7 @@ Simple as that we just access the project methods object and call create with na
 ```js
 import LumxApi from "lumx-node";
 
-const lumx = LumxApi.config({}); //leave it empty since you're doing your first interaction
+const lumx = LumxApi.config({}); //leave it empty since you're doing your first interaction   
 
 const { apiKey } = await lumx.project.create({
   name: "My Project", //Your project's name
@@ -39,7 +39,7 @@ bearer=<your_lumx_api_key>
 
 `Don't forget to install dotenv > yarn add dotenv | npm i dotenv`
 
-# 📞 Caliing methods
+# 📞 Calling methods
 
 The methods from transactions and projects are covered [here](https://docs.lumx.io/api-reference/v2/transactions/mint-tokens)
 
