@@ -134,15 +134,21 @@ import { WebSocketProvider, Contract } from "ethers";
  */
 
 export default class LumxAPI extends Web3 {
+    /**
+     * Lumx instanciate class
+     * @param {Object} variablesData
+     * @param {string} variablesData.bearer - The bearer token to authenticate with Lumx.
+     * @param {string} variablesData.web3_provider - The web3 provider to interact with the blockchain.
+     * @param {string} variablesData.web3_wss_provider - The web3 provider to listen to events. 
+     * @returns {LumxAPI}
+     */
     constructor(data) {
-        const { bearer, web3_provider, web3_wss_provider } = data;
-
-        super(web3_provider)
+        super(data.web3_provider)
 
         this._url = 'https://protocol-sandbox.lumx.io/v2/';
-        this.web3_wss_provider = web3_wss_provider;
-        this._bearerToken = bearer;
-        this._web3Provider = web3_provider;
+        this.web3_wss_provider = data.web3_wss_provider;
+        this._bearerToken = data.bearer;
+        this._web3Provider = data.web3_provider;
         this.operationsQueue = [];
         this.customContract = ''
     }
